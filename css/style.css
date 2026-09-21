@@ -681,3 +681,41 @@ textarea {
     }
 
 }
+
+/* ========================================
+   Project Filter
+   - 보너스 과제: 언어별 프로젝트 필터링
+======================================== */
+
+.project-filters {
+    display: flex;
+
+    justify-content: center;
+    flex-wrap: wrap;
+
+    gap: 0.5rem;
+
+    margin: 2rem 0;
+}
+
+
+.filter-button {
+    padding: 0.5rem 1rem;
+
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+
+    background: none;
+    color: var(--primary-color);
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+
+.filter-button:hover,
+.filter-button.active {
+    background-color: var(--primary-color);
+    color: #ffffff;
+}

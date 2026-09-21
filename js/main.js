@@ -369,8 +369,19 @@ const SELECTED_PROJECTS = [
     'python-quiz-manager'
 ];
 
+// GitHub API에서 가져온
+// 선택 프로젝트들을 보관한다.
+let loadedRepositories = [];
+
+
+// 현재 선택된 언어 필터
+let selectedLanguage = '전체';
+
 
 // HTML에서 만들어 둔 Projects 영역 선택
+const projectFilters =
+    document.querySelector('#project-filters');
+
 const projectsStatus =
     document.querySelector('#projects-status');
 
@@ -486,6 +497,162 @@ const renderProjects = (repositories) => {
         projectCards.join('');
 };
 
+// ========================================
+// 프로젝트 언어 필터링
+//
+// 사용자가 언어 버튼 클릭
+// → 선택 언어 상태 변경
+// → filter()
+// → Projects 다시 렌더링
+// ========================================
+
+const filterProjects = (language) => {
+
+    selectedLanguage = language;
+
+
+    // 전체를 선택한 경우
+    if (language === '전체') {
+
+        renderProjects(
+            loadedRepositories
+        );
+
+        return;
+    }
+
+
+    /*
+        선택한 언어와
+        Repository의 language가 같은 것만 남긴다.
+    */
+    const filteredRepositories =
+        loadedRepositories.filter(
+            (repository) =>
+                repository.language === language
+        );
+
+
+    renderProjects(
+        filteredRepositories
+    );
+};
+
+// ========================================
+// 언어 필터 버튼 생성
+// ========================================
+
+const renderFilterButtons = () => {
+
+    /*
+        Repository에서 language만 추출
+
+        예:
+        Java
+        Python
+        Python
+        JavaScript
+    */
+    const languages =
+        loadedRepositories
+            .map(
+                (repository) =>
+                    repository.language
+            )
+
+            // language가 null인 경우 제외
+            .filter(
+                (language) =>
+                    language !== null
+            );
+
+
+    /*
+        Set을 사용하여 중복 언어 제거
+
+        Python
+        Python
+
+        ↓
+
+        Python
+    */
+    const uniqueLanguages =
+        [...new Set(languages)];
+
+
+    /*
+        전체 버튼을 가장 앞에 추가
+    */
+    const filters = [
+        '전체',
+        ...uniqueLanguages
+    ];
+
+
+    /*
+        언어 배열을
+        버튼 HTML로 변환
+    */
+    const filterButtons =
+        filters.map((language) => {
+
+            const activeClass =
+                language === selectedLanguage
+                    ? 'active'
+                    : '';
+
+
+            return `
+                <button
+                    class="filter-button ${activeClass}"
+                    type="button"
+                    data-language="${language}"
+                >
+                    ${language}
+                </button>
+            `;
+        });
+
+
+    projectFilters.innerHTML =
+        filterButtons.join('');
+
+
+    /*
+        방금 생성한 버튼을 다시 선택
+    */
+    const buttons =
+        document.querySelectorAll(
+            '.filter-button'
+        );
+
+
+    buttons.forEach((button) => {
+
+        button.addEventListener(
+            'click',
+            () => {
+
+                const language =
+                    button.dataset.language;
+
+
+                filterProjects(
+                    language
+                );
+
+
+                /*
+                    버튼 active 상태도
+                    다시 렌더링한다.
+                */
+                renderFilterButtons();
+            }
+        );
+
+    });
+};
 
 // ========================================
 // Error 화면
@@ -494,6 +661,7 @@ const renderProjects = (repositories) => {
 const renderProjectsError = (message) => {
 
     projectsGrid.innerHTML = '';
+    projectFilters.innerHTML = '';
 
 
     /*
@@ -546,6 +714,7 @@ const fetchRepositories =
             '프로젝트를 불러오는 중입니다...';
 
         projectsGrid.innerHTML = '';
+        projectFilters.innerHTML = '';
 
 
         try {
@@ -634,13 +803,23 @@ const fetchRepositories =
             );
 
 
-            /*
-                API 호출 성공
+            // API에서 가져온 프로젝트를
+            // 나중에도 사용할 수 있도록 저장
+            loadedRepositories =
+                selectedRepositories;
 
-                선택한 프로젝트를 화면에 렌더링
-            */
+
+            // 첫 화면은 전체 프로젝트
+            selectedLanguage = '전체';
+
+
+            // 언어 필터 버튼 생성
+            renderFilterButtons();
+
+
+            // 전체 프로젝트 렌더링
             renderProjects(
-                selectedRepositories
+                loadedRepositories
             );
 
 
