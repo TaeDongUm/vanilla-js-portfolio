@@ -20,7 +20,6 @@
 /* ========================================
    2. 다크 모드 색상
    - 미션 요구사항: [data-theme="dark"]
-   - 실제 테마 변경은 다음 JS 작업에서 구현
 ======================================== */
 
 [data-theme="dark"] {
@@ -164,7 +163,6 @@ textarea {
 
 
 /*
-   다음 JavaScript 작업에서
    classList.toggle("active")로 사용한다.
 */
 .nav-menu.active {
@@ -415,8 +413,7 @@ textarea {
 
 
 /*
-   실제 project-card는
-   다음 GitHub API 작업에서
+   실제 project-card는 GitHub API 작업에서
    JavaScript로 생성한다.
 */
 .project-card {
@@ -493,8 +490,7 @@ textarea {
 
 
 /*
-   다음 JS 작업에서
-   잘못된 입력값에 invalid 클래스를 추가
+   JS 작업에서 잘못된 입력값에 invalid 클래스를 추가
 */
 .invalid {
     border-color: red !important;
@@ -552,7 +548,7 @@ textarea {
 /* ========================================
    13. Scroll Top Button
 
-   실제 표시/숨김은 다음 JS 작업에서 구현
+   실제 표시/숨김은 JS 작업에서 구현
 ======================================== */
 
 .scroll-top-button {
@@ -573,6 +569,26 @@ textarea {
     color: #ffffff;
 
     cursor: pointer;
+}
+
+/* ========================================
+   Scroll Animation
+   - Intersection Observer와 함께 사용
+======================================== */
+
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+
+    transition:
+        opacity 0.5s,
+        transform 0.5s;
+}
+
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 
