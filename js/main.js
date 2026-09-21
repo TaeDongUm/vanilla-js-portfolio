@@ -661,3 +661,320 @@ const fetchRepositories =
 // 페이지가 처음 실행될 때
 // GitHub Repository 가져오기
 fetchRepositories();
+
+// ========================================
+// 8. Contact Form Validation
+//
+// 사용자 입력
+// → 유효성 검사
+// → 상태 변경
+// → 에러/성공 메시지 렌더링
+//
+// 미션 요구사항:
+// input 이벤트
+// submit 이벤트
+// event.preventDefault()
+// 빈 값 검사
+// 이메일 형식 검사
+// ========================================
+
+
+// HTML Form 요소 선택
+const contactForm =
+    document.querySelector('#contact-form');
+
+const nameInput =
+    document.querySelector('#name');
+
+const emailInput =
+    document.querySelector('#email');
+
+const messageInput =
+    document.querySelector('#message');
+
+
+// 각 입력값의 에러 메시지 영역
+const nameError =
+    document.querySelector('#name-error');
+
+const emailError =
+    document.querySelector('#email-error');
+
+const messageError =
+    document.querySelector('#message-error');
+
+
+// 제출 성공 메시지 영역
+const formSuccess =
+    document.querySelector('#form-success');
+
+
+// ========================================
+// Form 상태
+//
+// 각 입력값이 현재 유효한지 저장한다.
+// ========================================
+
+const formState = {
+    nameValid: false,
+    emailValid: false,
+    messageValid: false
+};
+
+
+// ========================================
+// 이름 검사
+// ========================================
+
+const validateName = () => {
+
+    /*
+        trim()
+
+        입력값 앞뒤의 공백을 제거한다.
+
+        예:
+        "   " → ""
+    */
+    const value =
+        nameInput.value.trim();
+
+
+    if (value === '') {
+
+        formState.nameValid = false;
+
+        nameError.textContent =
+            '이름을 입력해주세요.';
+
+        nameInput.classList.add(
+            'invalid'
+        );
+
+        return false;
+    }
+
+
+    formState.nameValid = true;
+
+    nameError.textContent = '';
+
+    nameInput.classList.remove(
+        'invalid'
+    );
+
+    return true;
+};
+
+
+// ========================================
+// 이메일 형식 검사
+// ========================================
+
+const isValidEmail = (email) => {
+
+    /*
+        이메일의 기본적인 형식을 검사한다.
+
+        example@email.com
+    */
+    const emailPattern =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    return emailPattern.test(email);
+};
+
+
+const validateEmail = () => {
+
+    const value =
+        emailInput.value.trim();
+
+
+    // 이메일이 비어 있는 경우
+    if (value === '') {
+
+        formState.emailValid = false;
+
+        emailError.textContent =
+            '이메일을 입력해주세요.';
+
+        emailInput.classList.add(
+            'invalid'
+        );
+
+        return false;
+    }
+
+
+    // 이메일 형식이 잘못된 경우
+    if (!isValidEmail(value)) {
+
+        formState.emailValid = false;
+
+        emailError.textContent =
+            '올바른 이메일 형식을 입력해주세요.';
+
+        emailInput.classList.add(
+            'invalid'
+        );
+
+        return false;
+    }
+
+
+    formState.emailValid = true;
+
+    emailError.textContent = '';
+
+    emailInput.classList.remove(
+        'invalid'
+    );
+
+    return true;
+};
+
+
+// ========================================
+// 메시지 검사
+// ========================================
+
+const validateMessage = () => {
+
+    const value =
+        messageInput.value.trim();
+
+
+    if (value === '') {
+
+        formState.messageValid = false;
+
+        messageError.textContent =
+            '메시지를 입력해주세요.';
+
+        messageInput.classList.add(
+            'invalid'
+        );
+
+        return false;
+    }
+
+
+    formState.messageValid = true;
+
+    messageError.textContent = '';
+
+    messageInput.classList.remove(
+        'invalid'
+    );
+
+    return true;
+};
+
+
+// ========================================
+// Input Event
+//
+// 사용자가 입력할 때마다
+// 해당 필드의 상태를 다시 검사한다.
+// ========================================
+
+nameInput.addEventListener(
+    'input',
+    () => {
+
+        validateName();
+
+        formSuccess.textContent = '';
+    }
+);
+
+
+emailInput.addEventListener(
+    'input',
+    () => {
+
+        validateEmail();
+
+        formSuccess.textContent = '';
+    }
+);
+
+
+messageInput.addEventListener(
+    'input',
+    () => {
+
+        validateMessage();
+
+        formSuccess.textContent = '';
+    }
+);
+
+
+// ========================================
+// Submit Event
+// ========================================
+
+contactForm.addEventListener(
+    'submit',
+    (event) => {
+
+        /*
+            기본 Form 제출을 막는다.
+
+            페이지가 새로고침되거나
+            다른 페이지로 이동하는 것을 방지한다.
+        */
+        event.preventDefault();
+
+
+        /*
+            제출 시 모든 입력값을 한 번 더 검사한다.
+        */
+        const nameValid =
+            validateName();
+
+        const emailValid =
+            validateEmail();
+
+        const messageValid =
+            validateMessage();
+
+
+        /*
+            하나라도 잘못된 값이 있으면
+            제출을 중단한다.
+        */
+        if (
+            !nameValid ||
+            !emailValid ||
+            !messageValid
+        ) {
+
+            formSuccess.textContent = '';
+
+            return;
+        }
+
+
+        /*
+            모든 입력값이 정상인 경우
+        */
+        formSuccess.textContent =
+            '메시지가 정상적으로 작성되었습니다.';
+
+
+        /*
+            실제 서버 전송 기능은 없으므로
+            Form 입력값만 초기화한다.
+        */
+        contactForm.reset();
+
+
+        // 상태도 초기화
+        formState.nameValid = false;
+        formState.emailValid = false;
+        formState.messageValid = false;
+    }
+);
