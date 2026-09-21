@@ -332,3 +332,332 @@ sections.forEach((section) => {
     observer.observe(section);
 
 });
+
+// ========================================
+// 7. GitHub API Projects
+//
+// GitHub API
+// → 전체 Repository 가져오기
+// → 원하는 Repository만 filter()
+// → map()으로 HTML 생성
+// → Projects 영역에 렌더링
+//
+// 미션 요구사항:
+// fetch
+// async / await
+// try / catch
+// 구조분해 할당
+// filter()
+// map()
+// Template Literal
+// innerHTML
+// Loading / Success / Error / Empty
+// ========================================
+
+
+// GitHub 사용자 이름
+const GITHUB_USERNAME = 'TaeDongUm';
+
+
+// 포트폴리오에 보여줄 Repository
+//
+// GitHub의 프로젝트 정보 자체를 하드코딩하는 것이 아니라
+// "어떤 프로젝트를 보여줄 것인지"만 설정한다.
+const SELECTED_PROJECTS = [
+    'vanilla-js-portfolio',
+    'python-mini-npu-simulator',
+    'python-quiz-manager'
+];
+
+
+// HTML에서 만들어 둔 Projects 영역 선택
+const projectsStatus =
+    document.querySelector('#projects-status');
+
+const projectsGrid =
+    document.querySelector('#projects-grid');
+
+
+// ========================================
+// 프로젝트 카드 렌더링
+// ========================================
+
+const renderProjects = (repositories) => {
+
+    // 프로젝트가 하나도 없는 경우
+    if (repositories.length === 0) {
+
+        projectsStatus.textContent =
+            '표시할 프로젝트가 없습니다.';
+
+        projectsGrid.innerHTML = '';
+
+        return;
+    }
+
+
+    // 정상적으로 프로젝트가 있는 경우
+    projectsStatus.textContent = '';
+
+
+    /*
+        map()
+
+        Repository 배열
+
+        ↓
+
+        HTML 문자열 배열
+
+        로 변환한다.
+    */
+    const projectCards =
+        repositories.map((repository) => {
+
+            /*
+                구조분해 할당
+
+                repository.name처럼 하나씩 꺼내지 않고
+                필요한 값을 한 번에 꺼낸다.
+            */
+            const {
+                name,
+                description,
+                html_url,
+                language,
+                stargazers_count
+            } = repository;
+
+
+            /*
+                Template Literal
+
+                ${변수}를 이용하여
+                GitHub 데이터를 HTML 안에 넣는다.
+            */
+            return `
+                <article class="project-card">
+
+                    <h3>
+                        ${name}
+                    </h3>
+
+                    <p class="project-description">
+                        ${description || '프로젝트 설명이 없습니다.'}
+                    </p>
+
+                    <div class="project-meta">
+
+                        <span>
+                            ${language || '언어 정보 없음'}
+                        </span>
+
+                        <span>
+                            ⭐ ${stargazers_count}
+                        </span>
+
+                    </div>
+
+                    <a
+                        class="project-link"
+                        href="${html_url}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        GitHub →
+                    </a>
+
+                </article>
+            `;
+        });
+
+
+    /*
+        map()의 결과는 배열이므로
+
+        [
+            "<article>...</article>",
+            "<article>...</article>"
+        ]
+
+        join('')을 사용하여 하나의 문자열로 만든다.
+    */
+    projectsGrid.innerHTML =
+        projectCards.join('');
+};
+
+
+// ========================================
+// Error 화면
+// ========================================
+
+const renderProjectsError = (message) => {
+
+    projectsGrid.innerHTML = '';
+
+
+    /*
+        에러 메시지 + 다시 시도 버튼
+
+        미션 요구사항:
+        "프로젝트를 불러올 수 없습니다"
+        + 재시도 버튼
+    */
+    projectsStatus.innerHTML = `
+        <p>${message}</p>
+
+        <button
+            id="retry-button"
+            class="button primary-button"
+            type="button"
+        >
+            다시 시도
+        </button>
+    `;
+
+
+    // innerHTML로 버튼을 만든 뒤
+    // 새로 생성된 버튼을 선택한다.
+    const retryButton =
+        document.querySelector('#retry-button');
+
+
+    retryButton.addEventListener(
+        'click',
+        fetchRepositories
+    );
+};
+
+
+// ========================================
+// GitHub Repository 가져오기
+// ========================================
+
+const fetchRepositories =
+    async () => {
+
+        /*
+            1. Loading 상태
+
+            API 요청을 보내기 전에
+            사용자에게 현재 상태를 보여준다.
+        */
+        projectsStatus.textContent =
+            '프로젝트를 불러오는 중입니다...';
+
+        projectsGrid.innerHTML = '';
+
+
+        try {
+
+            /*
+                fetch()
+
+                GitHub 서버에 Repository 목록을 요청한다.
+
+                await:
+                응답이 올 때까지 기다린다.
+            */
+            const response =
+                await fetch(
+                    `https://api.github.com/users/${GITHUB_USERNAME}/repos?type=owner&per_page=100`
+                );
+
+
+            /*
+                HTTP 응답이 성공이 아닌 경우
+            */
+            if (!response.ok) {
+
+                /*
+                    GitHub API Rate Limit
+
+                    인증하지 않은 요청은
+                    시간당 호출 횟수 제한이 있다.
+
+                    제한에 도달하면 403이 발생할 수 있다.
+                */
+                if (response.status === 403) {
+
+                    throw new Error(
+                        'GitHub API 요청 제한에 도달했습니다. 잠시 후 다시 시도해주세요.'
+                    );
+                }
+
+
+                throw new Error(
+                    '프로젝트를 불러올 수 없습니다.'
+                );
+            }
+
+
+            /*
+                JSON 응답
+
+                GitHub 서버에서 받은 데이터를
+                JavaScript 배열로 변환한다.
+            */
+            const repositories =
+                await response.json();
+
+
+            /*
+                filter()
+
+                GitHub Repository 전체 중에서
+
+                SELECTED_PROJECTS에 이름이 들어있는
+                Repository만 남긴다.
+            */
+            const selectedRepositories =
+                repositories.filter(
+                    (repository) =>
+                        SELECTED_PROJECTS.includes(
+                            repository.name
+                        )
+                );
+
+
+            /*
+                SELECTED_PROJECTS에 적어둔 순서대로
+                프로젝트를 보여준다.
+            */
+            selectedRepositories.sort(
+                (first, second) =>
+                    SELECTED_PROJECTS.indexOf(
+                        first.name
+                    )
+                    -
+                    SELECTED_PROJECTS.indexOf(
+                        second.name
+                    )
+            );
+
+
+            /*
+                API 호출 성공
+
+                선택한 프로젝트를 화면에 렌더링
+            */
+            renderProjects(
+                selectedRepositories
+            );
+
+
+        } catch (error) {
+
+            /*
+                API 호출 실패
+
+                Error 상태 UI 렌더링
+            */
+            renderProjectsError(
+                error.message
+            );
+        }
+    };
+
+
+// 페이지가 처음 실행될 때
+// GitHub Repository 가져오기
+fetchRepositories();
