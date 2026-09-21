@@ -1,3 +1,23 @@
+const STATE = {
+    ui: {
+        menuOpen: false,
+        theme: localStorage.getItem('theme') || 'light'
+    },
+
+    projects: {
+        status: 'idle',
+        data: [],
+        error: null,
+        selectedLanguage: '전체'
+    },
+
+    form: {
+        nameValid: false,
+        emailValid: false,
+        messageValid: false
+    }
+};
+
 // ========================================
 // DOM 요소 선택
 // - 미션 요구사항: querySelector, querySelectorAll
@@ -33,21 +53,15 @@ const sections = document.querySelectorAll('.section');
 
 menuButton.addEventListener('click', () => {
 
-    navMenu.classList.toggle('active');
-
-    const isOpen =
-        navMenu.classList.contains('active');
-
-    menuButton.setAttribute(
-        'aria-expanded',
-        String(isOpen)
-    );
-
-    menuButton.setAttribute(
-        'aria-label',
-        isOpen ? '메뉴 닫기' : '메뉴 열기'
-    );
+    STATE.ui.menuOpen = !STATE.ui.menuOpen;
+    renderMenu();
 });
+
+const renderMenu = () => {
+    navMenu.classList.toggle('active', STATE.ui.menuOpen);
+    menuButton.setAttribute('aria-expanded', String(STATE.ui.menuOpen));
+    menuButton.setAttribute('aria-label', STATE.ui.menuOpen ? '메뉴 닫기' : '메뉴 열기');
+}
 
 
 // ========================================
@@ -84,19 +98,9 @@ navLinks.forEach((link) => {
             block: 'start'
         });
 
+        STATE.ui.menuOpen = false;
+        renderMenu();
 
-        // 모바일 메뉴가 열려 있었다면 닫기
-        navMenu.classList.remove('active');
-
-        menuButton.setAttribute(
-            'aria-expanded',
-            'false'
-        );
-
-        menuButton.setAttribute(
-            'aria-label',
-            '메뉴 열기'
-        );
     });
 });
 
@@ -199,77 +203,42 @@ scrollTopButton.addEventListener(
 // ========================================
 
 
-// 저장된 Theme 가져오기
-const savedTheme =
-    localStorage.getItem('theme');
-
-
-// 저장된 값이 dark이면
-// 페이지 시작부터 dark theme 적용
-if (savedTheme === 'dark') {
+const renderTheme = () => {
 
     document.documentElement.setAttribute(
         'data-theme',
-        'dark'
+        STATE.ui.theme
     );
 
-    themeButton.textContent = '☀️';
+    themeButton.textContent =
+        STATE.ui.theme === 'dark'
+            ? '☀️'
+            : '🌙';
 
-} else {
-
-    document.documentElement.setAttribute(
-        'data-theme',
-        'light'
+    themeButton.setAttribute(
+        'aria-label',
+        STATE.ui.theme === 'dark'
+            ? '라이트 모드 전환'
+            : '다크 모드 전환'
     );
-
-    themeButton.textContent = '🌙';
-}
-
+};
 
 // Theme 버튼 클릭
 themeButton.addEventListener(
     'click',
     () => {
 
-        const currentTheme =
-            document.documentElement.getAttribute(
-                'data-theme'
-            );
-
-
-        const newTheme =
-            currentTheme === 'dark'
+        STATE.ui.theme =
+            STATE.ui.theme === 'dark'
                 ? 'light'
                 : 'dark';
 
-
-        // 상태 변경
-        document.documentElement.setAttribute(
-            'data-theme',
-            newTheme
-        );
-
-
-        // 브라우저에 현재 상태 저장
         localStorage.setItem(
             'theme',
-            newTheme
+            STATE.ui.theme
         );
 
-
-        // 화면에 표시되는 버튼 변경
-        themeButton.textContent =
-            newTheme === 'dark'
-                ? '☀️'
-                : '🌙';
-
-
-        themeButton.setAttribute(
-            'aria-label',
-            newTheme === 'dark'
-                ? '라이트 모드 전환'
-                : '다크 모드 전환'
-        );
+        renderTheme();
     }
 );
 
@@ -369,15 +338,6 @@ const SELECTED_PROJECTS = [
     'python-quiz-manager'
 ];
 
-// GitHub API에서 가져온
-// 선택 프로젝트들을 보관한다.
-let loadedRepositories = [];
-
-
-// 현재 선택된 언어 필터
-let selectedLanguage = '전체';
-
-
 // HTML에서 만들어 둔 Projects 영역 선택
 const projectFilters =
     document.querySelector('#project-filters');
@@ -393,23 +353,84 @@ const projectsGrid =
 // 프로젝트 카드 렌더링
 // ========================================
 
-const renderProjects = (repositories) => {
+const renderProjects = () => {
 
-    // 프로젝트가 하나도 없는 경우
-    if (repositories.length === 0) {
+    const {
+        status,
+        data,
+        selectedLanguage,
+        error
+    } = STATE.projects;
 
+    projectsStatus.innerHTML = '';
+    projectsGrid.innerHTML = '';
+
+    // Loading 상태
+    if (status === 'loading') {
+
+        projectFilters.innerHTML = '';
         projectsStatus.textContent =
-            '표시할 프로젝트가 없습니다.';
-
-        projectsGrid.innerHTML = '';
+            '프로젝트를 불러오는 중입니다...';
 
         return;
     }
 
+    // Error 상태
+    if (status === 'error') {
+        projectFilters.innerHTML = '';     
 
-    // 정상적으로 프로젝트가 있는 경우
-    projectsStatus.textContent = '';
+        projectsStatus.innerHTML = `
+            <p>${error}</p>
 
+            <button
+                id="retry-button"
+                class="button primary-button"
+                type="button"
+            >
+                다시 시도
+            </button>
+        `;
+
+        const retryButton =
+            document.querySelector(
+                '#retry-button'
+            );
+
+        retryButton.addEventListener(
+            'click',
+            fetchRepositories
+        );
+
+        return;
+    }
+
+    if (status !== 'success') {
+        return;
+    }
+
+
+    /*
+        현재 선택한 언어에 따라
+        화면에 보여줄 프로젝트 결정
+    */
+    const visibleRepositories =
+        selectedLanguage === '전체'
+            ? data
+            : data.filter(
+                (repository) =>
+                    repository.language ===
+                    selectedLanguage
+            );
+
+
+    // Empty
+    if (visibleRepositories.length === 0) {
+
+        projectsStatus.textContent =
+            '표시할 프로젝트가 없습니다.';
+
+        return;
+    }
 
     /*
         map()
@@ -423,7 +444,7 @@ const renderProjects = (repositories) => {
         로 변환한다.
     */
     const projectCards =
-        repositories.map((repository) => {
+        visibleRepositories.map((repository) => {
 
             /*
                 구조분해 할당
@@ -508,34 +529,12 @@ const renderProjects = (repositories) => {
 
 const filterProjects = (language) => {
 
-    selectedLanguage = language;
+    STATE.projects.selectedLanguage =
+        language;
 
+    renderProjects();
 
-    // 전체를 선택한 경우
-    if (language === '전체') {
-
-        renderProjects(
-            loadedRepositories
-        );
-
-        return;
-    }
-
-
-    /*
-        선택한 언어와
-        Repository의 language가 같은 것만 남긴다.
-    */
-    const filteredRepositories =
-        loadedRepositories.filter(
-            (repository) =>
-                repository.language === language
-        );
-
-
-    renderProjects(
-        filteredRepositories
-    );
+    renderFilterButtons();
 };
 
 // ========================================
@@ -554,7 +553,7 @@ const renderFilterButtons = () => {
         JavaScript
     */
     const languages =
-        loadedRepositories
+        STATE.projects.data
             .map(
                 (repository) =>
                     repository.language
@@ -598,7 +597,7 @@ const renderFilterButtons = () => {
         filters.map((language) => {
 
             const activeClass =
-                language === selectedLanguage
+                language === STATE.projects.selectedLanguage
                     ? 'active'
                     : '';
 
@@ -634,66 +633,14 @@ const renderFilterButtons = () => {
             'click',
             () => {
 
-                const language =
-                    button.dataset.language;
-
-
                 filterProjects(
-                    language
+                    button.dataset.language
                 );
 
-
-                /*
-                    버튼 active 상태도
-                    다시 렌더링한다.
-                */
-                renderFilterButtons();
             }
         );
 
     });
-};
-
-// ========================================
-// Error 화면
-// ========================================
-
-const renderProjectsError = (message) => {
-
-    projectsGrid.innerHTML = '';
-    projectFilters.innerHTML = '';
-
-
-    /*
-        에러 메시지 + 다시 시도 버튼
-
-        미션 요구사항:
-        "프로젝트를 불러올 수 없습니다"
-        + 재시도 버튼
-    */
-    projectsStatus.innerHTML = `
-        <p>${message}</p>
-
-        <button
-            id="retry-button"
-            class="button primary-button"
-            type="button"
-        >
-            다시 시도
-        </button>
-    `;
-
-
-    // innerHTML로 버튼을 만든 뒤
-    // 새로 생성된 버튼을 선택한다.
-    const retryButton =
-        document.querySelector('#retry-button');
-
-
-    retryButton.addEventListener(
-        'click',
-        fetchRepositories
-    );
 };
 
 
@@ -704,18 +651,24 @@ const renderProjectsError = (message) => {
 const fetchRepositories =
     async () => {
 
-        /*
-            1. Loading 상태
+        // /*
+        //     1. Loading 상태
 
-            API 요청을 보내기 전에
-            사용자에게 현재 상태를 보여준다.
-        */
-        projectsStatus.textContent =
-            '프로젝트를 불러오는 중입니다...';
+        //     API 요청을 보내기 전에
+        //     사용자에게 현재 상태를 보여준다.
+        // */
+        // projectsStatus.textContent =
+        //     '프로젝트를 불러오는 중입니다...';
 
-        projectsGrid.innerHTML = '';
-        projectFilters.innerHTML = '';
+        // projectsGrid.innerHTML = '';
+        // projectFilters.innerHTML = '';
 
+        STATE.projects.status = 'loading';
+        STATE.projects.data = [];
+        STATE.projects.error = null;
+        STATE.projects.selectedLanguage = '전체';
+
+        renderProjects();
 
         try {
 
@@ -805,22 +758,23 @@ const fetchRepositories =
 
             // API에서 가져온 프로젝트를
             // 나중에도 사용할 수 있도록 저장
-            loadedRepositories =
+
+            STATE.projects.status = 'success';
+
+            STATE.projects.data =
                 selectedRepositories;
 
-
             // 첫 화면은 전체 프로젝트
-            selectedLanguage = '전체';
+            STATE.projects.selectedLanguage = '전체';
 
+            STATE.projects.error = null;
 
             // 언어 필터 버튼 생성
             renderFilterButtons();
 
 
             // 전체 프로젝트 렌더링
-            renderProjects(
-                loadedRepositories
-            );
+            renderProjects();
 
 
         } catch (error) {
@@ -830,9 +784,16 @@ const fetchRepositories =
 
                 Error 상태 UI 렌더링
             */
-            renderProjectsError(
-                error.message
-            );
+            STATE.projects.status =
+                'error';
+
+            STATE.projects.data =
+                [];
+
+            STATE.projects.error =
+                error.message;
+
+            renderProjects();
         }
     };
 
@@ -894,12 +855,6 @@ const formSuccess =
 // 각 입력값이 현재 유효한지 저장한다.
 // ========================================
 
-const formState = {
-    nameValid: false,
-    emailValid: false,
-    messageValid: false
-};
-
 
 // ========================================
 // 이름 검사
@@ -921,7 +876,7 @@ const validateName = () => {
 
     if (value === '') {
 
-        formState.nameValid = false;
+        STATE.form.nameValid = false;
 
         nameError.textContent =
             '이름을 입력해주세요.';
@@ -934,7 +889,7 @@ const validateName = () => {
     }
 
 
-    formState.nameValid = true;
+    STATE.from.nameValid = true;
 
     nameError.textContent = '';
 
@@ -973,7 +928,7 @@ const validateEmail = () => {
     // 이메일이 비어 있는 경우
     if (value === '') {
 
-        formState.emailValid = false;
+        STATE.form.emailValid = false;
 
         emailError.textContent =
             '이메일을 입력해주세요.';
@@ -989,7 +944,7 @@ const validateEmail = () => {
     // 이메일 형식이 잘못된 경우
     if (!isValidEmail(value)) {
 
-        formState.emailValid = false;
+        STATE.from.emailValid = false;
 
         emailError.textContent =
             '올바른 이메일 형식을 입력해주세요.';
@@ -1002,7 +957,7 @@ const validateEmail = () => {
     }
 
 
-    formState.emailValid = true;
+    STATE.from.emailValid = true;
 
     emailError.textContent = '';
 
@@ -1026,7 +981,7 @@ const validateMessage = () => {
 
     if (value === '') {
 
-        formState.messageValid = false;
+        STATE.from.messageValid = false;
 
         messageError.textContent =
             '메시지를 입력해주세요.';
@@ -1039,7 +994,7 @@ const validateMessage = () => {
     }
 
 
-    formState.messageValid = true;
+    STATE.from.messageValid = true;
 
     messageError.textContent = '';
 
@@ -1152,8 +1107,8 @@ contactForm.addEventListener(
 
 
         // 상태도 초기화
-        formState.nameValid = false;
-        formState.emailValid = false;
-        formState.messageValid = false;
+        STATE.from.nameValid = false;
+        STATE.from.emailValid = false;
+        STATE.from.messageValid = false;
     }
 );
