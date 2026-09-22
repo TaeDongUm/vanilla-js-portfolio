@@ -210,24 +210,87 @@ Settings
 
 ### Desktop
 
-```text
-images/desktop.png
-```
+![Desktop](./screenshots/desktopmode.png)
 
 ### Mobile
 
-```text
-images/mobile.png
-```
+![Mobile](./screenshots/mobilemode.png)
 
 ### Dark Mode
 
-```text
-images/dark-mode.png
-```
+![Dark Mode](./screenshots/darkmode.png)
 
-```markdown
-![Desktop](./images/desktop.png)
-![Mobile](./images/mobile.png)
-![Dark Mode](./images/dark-mode.png)
-```
+---
+
+### 1. HTML에서 시맨틱 태그를 왜 사용했으며, 어떤 기준으로 구조를 설계했나요?
+
+시맨틱 태그는 단순히 화면을 나누는 용도가 아니라, 각 영역이 어떤 의미와 역할을 가지는지 HTML 자체에서 표현하기 위해 사용했습니다.
+
+페이지 상단 영역에는 `<header>`, 주요 메뉴에는 `<nav>`, 핵심 콘텐츠 영역에는 `<main>`, 각각의 콘텐츠 구역에는 `<section>`, 독립적인 콘텐츠에는 `<article>`, 페이지 하단에는 `<footer>`를 사용했습니다.
+
+반면 `<div>`는 특별한 의미를 표현하기보다는 CSS를 통한 레이아웃 배치나 여러 요소를 하나의 그룹으로 묶어야 할 때 사용했습니다.
+
+즉, 의미를 가지는 영역에는 시맨틱 태그를 사용하고, 단순한 배치나 그룹화가 필요한 경우에는 `<div>`를 사용하는 기준으로 구조를 설계했습니다.
+
+### 2. CSS에서 Flexbox와 Grid의 차이는 무엇이며, 각각 언제 사용했나요?
+
+Flexbox는 기본적으로 한 방향으로 요소를 정렬하거나 배치할 때 적합하고, Grid는 행과 열을 기준으로 여러 요소를 배치할 때 적합하다고 판단했습니다.
+
+Navigation 영역에서는 로고와 메뉴를 하나의 행에 정렬해야 했기 때문에 Flexbox를 사용했습니다.
+
+Projects 영역에서는 여러 프로젝트 카드를 화면 크기에 따라 자동으로 배치해야 했기 때문에 CSS Grid를 사용했습니다.
+
+특히 Projects에서는 `auto-fit`과 `minmax()`를 사용하여 화면 너비에 따라 카드의 열 개수가 자동으로 변경되도록 구현했습니다.
+
+### 3. `querySelector`로 DOM을 선택하고 `addEventListener`로 이벤트를 연결하는 흐름을 어떻게 구현했나요?
+
+먼저 `querySelector` 또는 `querySelectorAll`을 사용하여 JavaScript에서 제어할 HTML 요소를 선택했습니다.
+
+이후 선택한 요소에 `addEventListener`를 등록하여 사용자의 `click`, `scroll`, `input`, `submit` 등의 이벤트를 감지하도록 구현했습니다.
+
+이벤트가 발생하면 상태나 DOM의 클래스, 속성, 텍스트 등을 변경하여 실제 화면이 변경되도록 구현했습니다.
+
+즉, `DOM 요소 선택 → 이벤트 등록 → 사용자 행동 감지 → 상태 또는 DOM 변경 → 화면 업데이트`의 흐름으로 기능을 구성했습니다.
+
+### 4. 화살표 함수, 구조분해 할당, 배열 메서드(`map`, `filter`, `forEach`)는 왜 사용했나요?
+
+화살표 함수는 이벤트 콜백이나 작은 함수들을 간결하게 작성하기 위해 사용했습니다.
+
+구조분해 할당은 GitHub API에서 전달받은 Repository 객체에서 `name`, `description`, `language`, `html_url` 등 필요한 값만 한 번에 추출하기 위해 사용했습니다.
+
+`filter()`는 GitHub API를 통해 가져온 전체 Repository 중 포트폴리오에 표시할 프로젝트만 선택하기 위해 사용했습니다.
+
+`map()`은 선택된 Repository 데이터를 프로젝트 카드 형태의 HTML 문자열로 변환하기 위해 사용했습니다.
+
+`forEach()`는 여러 Navigation Link나 Intersection Observer 대상 요소를 순회하면서 각각 이벤트를 등록하거나 처리하기 위해 사용했습니다.
+
+이를 통해 반복문을 직접 작성하는 것보다 코드의 목적을 명확하게 표현할 수 있었습니다.
+
+### 5. `fetch`와 `async/await`로 비동기 데이터를 가져오고, 로딩/성공/실패 상태를 어떻게 표현했나요?
+
+GitHub API는 네트워크를 통해 데이터를 받아와야 하기 때문에 비동기 처리가 필요했습니다.
+
+`fetch()`를 사용하여 GitHub API에 Repository 데이터를 요청했고, 응답을 기다리기 위해 `async/await`를 사용했습니다.
+
+API 요청 중에는 사용자가 현재 상태를 알 수 있도록 로딩 메시지를 표시했습니다.
+
+요청에 성공하면 Repository 데이터를 프로젝트 카드 형태로 렌더링했고, 데이터가 없는 경우에는 빈 상태 메시지를 표시했습니다.
+
+API 요청에 실패하거나 GitHub API 요청 제한이 발생한 경우에는 `try/catch`를 통해 오류를 처리하고, 에러 메시지와 다시 시도 버튼을 표시했습니다.
+
+이를 통해 `Loading → Success / Empty / Error` 상태를 각각 구분하여 UI에 표현했습니다.
+
+### 6. 하나의 기능을 만들기 위해 이벤트 → 상태 변경 → DOM 업데이트가 어떻게 연결되도록 구현했나요?
+
+사용자의 이벤트가 발생하면 바로 화면만 변경하는 방식보다는, 먼저 애플리케이션의 상태를 변경한 후 해당 상태를 기준으로 화면을 다시 렌더링하는 구조를 사용했습니다.
+
+예를 들어 다크모드 버튼을 클릭하면 현재 테마 상태를 변경하고, 변경된 상태를 LocalStorage에 저장한 뒤 렌더링 함수를 호출하여 `data-theme` 속성과 버튼 표시를 변경했습니다.
+
+GitHub API에서도 API 요청이 시작되면 프로젝트 상태를 `loading`으로 변경하고, 요청이 성공하면 `success` 상태와 Repository 데이터를 저장했으며, 실패하면 `error` 상태와 오류 메시지를 저장한 뒤 해당 상태를 기준으로 Projects 영역을 다시 렌더링했습니다.
+
+폼에서도 사용자의 입력 이벤트가 발생하면 입력값의 유효성 상태를 변경하고, 해당 상태에 따라 에러 메시지와 입력 필드의 스타일을 업데이트했습니다.
+
+이처럼 `사용자 이벤트 → 상태 변경 → 렌더링 함수 호출 → DOM 업데이트 → 화면 변경`의 흐름을 기준으로 기능을 구현했습니다.
+
+이 구조를 통해 React에서 사용하는 상태 기반 렌더링 방식의 기초 개념을 직접 경험할 수 있었습니다.
+
