@@ -212,8 +212,8 @@ const renderTheme = () => {
 
     themeButton.textContent =
         STATE.ui.theme === 'dark'
-            ? '☀️'
-            : '🌙';
+            ? '🌙'
+            : '☀️';
 
     themeButton.setAttribute(
         'aria-label',
@@ -1112,3 +1112,5 @@ contactForm.addEventListener(
         STATE.form.messageValid = false;
     }
 );
+
+renderTheme()
