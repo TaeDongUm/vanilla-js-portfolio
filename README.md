@@ -210,11 +210,17 @@ Settings
 
 ### Desktop
 
-![Desktop](./screenshots/desktopmode.png)
-
 ### Mobile
 
 ![Mobile](./screenshots/mobilemode.png)
+
+### Tablet
+
+![Tablet](./screenshots/tablet.png)
+
+### Desktop
+
+![Desktop](./screenshots/desktopmode.png)
 
 ### Dark Mode
 
