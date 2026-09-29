@@ -889,7 +889,7 @@ const validateName = () => {
     }
 
 
-    STATE.from.nameValid = true;
+    STATE.form.nameValid = true;
 
     nameError.textContent = '';
 
@@ -944,7 +944,7 @@ const validateEmail = () => {
     // 이메일 형식이 잘못된 경우
     if (!isValidEmail(value)) {
 
-        STATE.from.emailValid = false;
+        STATE.form.emailValid = false;
 
         emailError.textContent =
             '올바른 이메일 형식을 입력해주세요.';
@@ -957,7 +957,7 @@ const validateEmail = () => {
     }
 
 
-    STATE.from.emailValid = true;
+    STATE.form.emailValid = true;
 
     emailError.textContent = '';
 
@@ -981,7 +981,7 @@ const validateMessage = () => {
 
     if (value === '') {
 
-        STATE.from.messageValid = false;
+        STATE.form.messageValid = false;
 
         messageError.textContent =
             '메시지를 입력해주세요.';
@@ -994,7 +994,7 @@ const validateMessage = () => {
     }
 
 
-    STATE.from.messageValid = true;
+    STATE.form.messageValid = true;
 
     messageError.textContent = '';
 
@@ -1107,8 +1107,8 @@ contactForm.addEventListener(
 
 
         // 상태도 초기화
-        STATE.from.nameValid = false;
-        STATE.from.emailValid = false;
-        STATE.from.messageValid = false;
+        STATE.form.nameValid = false;
+        STATE.form.emailValid = false;
+        STATE.form.messageValid = false;
     }
 );
