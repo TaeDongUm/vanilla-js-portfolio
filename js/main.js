@@ -648,6 +648,11 @@ const renderFilterButtons = () => {
 // GitHub Repository 가져오기
 // ========================================
 
+const delay = (ms) =>
+    new Promise((resolve) =>
+        setTimeout(resolve, ms)
+    );
+
 const fetchRepositories =
     async () => {
 
@@ -680,10 +685,13 @@ const fetchRepositories =
                 await:
                 응답이 올 때까지 기다린다.
             */
-            const response =
-                await fetch(
+            const [response] =             
+                await Promise.all([
+                    fetch(
                     `https://api.github.com/users/${GITHUB_USERNAME}/repos?type=owner&per_page=100`
-                );
+                ),
+                delay(500)
+            ]);
 
 
             /*
@@ -791,7 +799,9 @@ const fetchRepositories =
                 [];
 
             STATE.projects.error =
-                error.message;
+                error.message === 'Failed to fetch'
+                ? '프로젝트를 불러올 수 없습니다. 네트워크 연결을 확인해주세요.'
+                : error.message;
 
             renderProjects();
         }
